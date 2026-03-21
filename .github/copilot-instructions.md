@@ -1,0 +1,5 @@
+- Use Next.js App Router patterns (server components by default).
+- Prefer colocating UI in `src/app` and reusable components in `src/components`.
+- For TradingView integration, use the public embed widget script (no Charting Library).
+- Keep pages minimal; avoid adding new routes/features unless requested.
+- Use existing Tailwind tokens/classes; do not introduce custom colors/fonts.
