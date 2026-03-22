@@ -1,48 +1,87 @@
-import { TradingViewWidget } from "@/components/TradingViewWidget";
+import { TradingViewChart } from "@/components/TradingViewChart";
 
-const DEFAULT_SYMBOLS = [
-  { label: "BTCUSD", symbol: "COINBASE:BTCUSD", interval: "60" },
-  { label: "ETHUSD", symbol: "COINBASE:ETHUSD", interval: "60" },
-  { label: "SPY", symbol: "AMEX:SPY", interval: "D" },
-  { label: "AAPL", symbol: "NASDAQ:AAPL", interval: "D" },
+const CATEGORIES = [
+  {
+    title: "US Stocks",
+    symbols: [
+      { label: "Apple", symbol: "AAPL" },
+      { label: "Microsoft", symbol: "MSFT" },
+      { label: "Google", symbol: "GOOGL" },
+      { label: "Tesla", symbol: "TSLA" },
+      { label: "Amazon", symbol: "AMZN" },
+      { label: "Meta", symbol: "META" },
+      { label: "NVIDIA", symbol: "NVDA" },
+    ],
+  },
+  {
+    title: "Indian Indices",
+    symbols: [
+      { label: "NIFTY 50", symbol: "^NSEI" },
+      { label: "SENSEX", symbol: "^BSESN" },
+      { label: "Bank NIFTY", symbol: "^NSEBANK" },
+    ],
+  },
+  {
+    title: "Cryptocurrency",
+    symbols: [
+      { label: "Bitcoin", symbol: "BTC-USD" },
+      { label: "Ethereum", symbol: "ETH-USD" },
+      { label: "Solana", symbol: "SOL-USD" },
+      { label: "XRP", symbol: "XRP-USD" },
+      { label: "BNB", symbol: "BNB-USD" },
+    ],
+  },
+  {
+    title: "Commodities",
+    symbols: [
+      { label: "Gold", symbol: "GC=F" },
+      { label: "Silver", symbol: "SI=F" },
+      { label: "Copper", symbol: "HG=F" },
+      { label: "US Oil (WTI)", symbol: "CL=F" },
+    ],
+  },
 ] as const;
 
 export default function DashboardPage() {
   return (
-    <div className="flex flex-1 flex-col bg-zinc-50 text-black dark:bg-black dark:text-zinc-50">
-      <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-6 py-10">
-        <header className="flex flex-col gap-2">
-          <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
-          <p className="text-zinc-600 dark:text-zinc-400">
-            Multi-chart overview powered by TradingView.
-          </p>
-        </header>
+    <div className="flex flex-col gap-10 p-6">
+      <header>
+        <h1 className="text-2xl font-bold tracking-tight" style={{ color: "#D1D4DC" }}>
+          Dashboard
+        </h1>
+        <p className="text-sm mt-1" style={{ color: "#787B86" }}>
+          Real-time market overview — all major asset classes.
+        </p>
+      </header>
 
-        <section className="grid gap-6 md:grid-cols-2">
-          {DEFAULT_SYMBOLS.map((item) => (
-            <div
-              key={item.symbol}
-              className="rounded-lg bg-white p-3 dark:bg-black"
-            >
-              <div className="mb-3 flex items-baseline justify-between gap-4">
-                <h2 className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
-                  {item.label}
-                </h2>
-                <span className="text-xs text-zinc-500 dark:text-zinc-500">
-                  {item.symbol}
-                </span>
+      {CATEGORIES.map((category) => (
+        <section key={category.title} className="flex flex-col gap-4">
+          <h2
+            className="text-lg font-semibold pb-2 border-b"
+            style={{ color: "#D1D4DC", borderColor: "rgba(42,46,57,0.5)" }}
+          >
+            {category.title}
+          </h2>
+          <div className="grid gap-4 xl:grid-cols-2">
+            {category.symbols.map((item) => (
+              <div
+                key={item.symbol}
+                className="rounded-lg overflow-hidden"
+                style={{
+                  background: "#131722",
+                  border: "1px solid rgba(42,46,57,0.5)",
+                }}
+              >
+                <TradingViewChart
+                  symbol={item.symbol}
+                  height={320}
+                  showToolbar={true}
+                />
               </div>
-
-              <TradingViewWidget
-                symbol={item.symbol}
-                interval={item.interval}
-                height={420}
-                theme="auto"
-              />
-            </div>
-          ))}
+            ))}
+          </div>
         </section>
-      </main>
+      ))}
     </div>
   );
 }
