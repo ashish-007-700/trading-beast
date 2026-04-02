@@ -9,7 +9,7 @@ export default function Home() {
           Trading Beast
         </h1>
         <p className="text-sm mt-1" style={{ color: "#787B86" }}>
-          Professional charting &amp; trading platform.
+          Professional charting &amp; trading platform with live WebSocket data.
         </p>
       </header>
 
@@ -20,7 +20,7 @@ export default function Home() {
           border: "1px solid rgba(42,46,57,0.5)",
         }}
       >
-        <TradingViewChart symbol="AAPL" height={550} />
+        <TradingViewChart symbol="BTC-USD" height={550} />
       </div>
     </div>
   );

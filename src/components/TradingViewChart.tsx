@@ -38,6 +38,17 @@ interface OhlcInfo {
 }
 
 /* ------------------------------------------------------------------ */
+/*  WebSocket interval mapping                                         */
+/* ------------------------------------------------------------------ */
+const WS_INTERVAL_MAP: Record<string, string> = {
+  "1m": "1m",
+  "5m": "5m",
+  "15m": "15m",
+  "60m": "1h",
+  "1d": "1d",
+};
+
+/* ------------------------------------------------------------------ */
 /*  Timeframe configurations                                           */
 /* ------------------------------------------------------------------ */
 const TIMEFRAMES = [
@@ -79,12 +90,15 @@ export const TradingViewChart: React.FC<TradingViewChartProps> = ({
   const chartRef = useRef<IChartApi | null>(null);
   const candleSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
   const volumeSeriesRef = useRef<ISeriesApi<"Histogram"> | null>(null);
+  const wsRef = useRef<WebSocket | null>(null);
+  const lastCandleRef = useRef<CandlestickData | null>(null);
 
-  const [activeTimeframe, setActiveTimeframe] = useState<TimeframeKey>("D");
+  const [activeTimeframe, setActiveTimeframe] = useState<TimeframeKey>("1m");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [ohlc, setOhlc] = useState<OhlcInfo | null>(null);
   const [dataCount, setDataCount] = useState(0);
+  const [isLive, setIsLive] = useState(false);
 
   /* ---- Chart initialization ---- */
   useEffect(() => {
@@ -254,6 +268,109 @@ export const TradingViewChart: React.FC<TradingViewChartProps> = ({
     fetchData();
   }, [fetchData]);
 
+  /* ---- WebSocket for live updates (Binance only) ---- */
+  useEffect(() => {
+    const sourceInfo = getDataSourceInfo(symbol);
+    
+    // Only connect WebSocket for Binance (crypto) symbols
+    if (sourceInfo.source !== "binance") {
+      setIsLive(false);
+      return;
+    }
+
+    // Convert symbol to Binance format
+    let binanceSymbol = symbol.toUpperCase();
+    if (binanceSymbol.endsWith("-USD")) {
+      binanceSymbol = binanceSymbol.replace("-USD", "USDT").toLowerCase();
+    } else {
+      binanceSymbol = binanceSymbol.toLowerCase();
+    }
+
+    const wsInterval = WS_INTERVAL_MAP[TIMEFRAMES.find(t => t.label === activeTimeframe)?.interval || "1m"] || "1m";
+    const wsUrl = `wss://stream.binance.com:9443/ws/${binanceSymbol}@kline_${wsInterval}`;
+
+    const connectWebSocket = () => {
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
+
+      const ws = new WebSocket(wsUrl);
+
+      ws.onopen = () => {
+        console.log(`[WS] Connected: ${binanceSymbol}@kline_${wsInterval}`);
+        setIsLive(true);
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.e !== "kline") return;
+
+          const k = data.k;
+          const time = Math.floor(k.t / 1000) as UTCTimestamp;
+          const open = parseFloat(k.o);
+          const high = parseFloat(k.h);
+          const low = parseFloat(k.l);
+          const close = parseFloat(k.c);
+          const volume = parseFloat(k.v);
+
+          const candle: CandlestickData = { time, open, high, low, close };
+          const volColor = close >= open ? "rgba(38,166,154,0.4)" : "rgba(239,83,80,0.4)";
+          const volData: HistogramData = { time, value: volume, color: volColor };
+
+          // Update chart
+          if (candleSeriesRef.current) {
+            candleSeriesRef.current.update(candle);
+          }
+          if (volumeSeriesRef.current) {
+            volumeSeriesRef.current.update(volData);
+          }
+
+          lastCandleRef.current = candle;
+
+          // Update OHLC display
+          const change = close - open;
+          const changePercent = open !== 0 ? (change / open) * 100 : 0;
+          setOhlc({
+            open,
+            high,
+            low,
+            close,
+            volume,
+            time: time as number,
+            change,
+            changePercent,
+          });
+        } catch (err) {
+          console.error("[WS] Parse error:", err);
+        }
+      };
+
+      ws.onerror = (err) => {
+        console.error("[WS] Error:", err);
+        setIsLive(false);
+      };
+
+      ws.onclose = () => {
+        console.log("[WS] Disconnected");
+        setIsLive(false);
+      };
+
+      wsRef.current = ws;
+    };
+
+    // Small delay to ensure chart is ready
+    const timer = setTimeout(connectWebSocket, 500);
+
+    return () => {
+      clearTimeout(timer);
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
+    };
+  }, [symbol, activeTimeframe]);
+
   /* ---------------------------------------------------------------- */
   /*  Render                                                           */
   /* ---------------------------------------------------------------- */
@@ -319,6 +436,20 @@ export const TradingViewChart: React.FC<TradingViewChartProps> = ({
             style={{ background: "#2A2E39", color: "#787B86" }}
           >
             {dataCount} candles
+          </span>
+        )}
+
+        {/* Live indicator */}
+        {isLive && (
+          <span
+            className="flex items-center gap-1.5 text-[10px] font-bold px-2 py-0.5 rounded"
+            style={{ background: "rgba(38,166,154,0.2)", color: "#26A69A" }}
+          >
+            <span
+              className="w-2 h-2 rounded-full animate-pulse"
+              style={{ background: "#26A69A" }}
+            />
+            LIVE
           </span>
         )}
 
