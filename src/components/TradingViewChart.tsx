@@ -13,6 +13,7 @@ import {
   HistogramSeries,
   CrosshairMode,
 } from "lightweight-charts";
+import { getDataSourceInfo } from "../lib/symbolClassifier";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -183,7 +184,18 @@ export const TradingViewChart: React.FC<TradingViewChartProps> = ({
     const tf = TIMEFRAMES.find((t) => t.label === activeTimeframe) ?? TIMEFRAMES[4];
 
     try {
-      const url = `/api/yahoo/candles?symbol=${encodeURIComponent(symbol)}&interval=${tf.interval}&range=${tf.range}`;
+      // Route to correct API based on symbol type
+      const sourceInfo = getDataSourceInfo(symbol);
+      let url: string;
+      
+      if (sourceInfo.source === "binance") {
+        // Crypto symbols use Binance API
+        url = `/api/binance/candles?symbol=${encodeURIComponent(symbol)}&interval=${tf.interval}&range=${tf.range}`;
+      } else {
+        // Stocks and everything else use Yahoo API
+        url = `/api/yahoo/candles?symbol=${encodeURIComponent(symbol)}&interval=${tf.interval}&range=${tf.range}`;
+      }
+      
       const resp = await fetch(url, { cache: "no-store" });
 
       if (!resp.ok) {
