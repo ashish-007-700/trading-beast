@@ -1,35 +1,91 @@
-Trading Beast is a Next.js (App Router) + TypeScript project with a Finnhub-backed price chart widget.
+# Trading Beast
+
+A MERN stack trading platform with real-time charts, featuring data from Binance, Yahoo Finance, and Finnhub.
+
+## Architecture
+
+```
+trading-beast/
+├── client/          # React + Vite + TypeScript frontend
+├── server/          # Express + TypeScript backend
+└── package.json     # Workspace scripts
+```
 
 ## Getting Started
 
-Install dependencies and run the development server:
+### 1. Install all dependencies
 
 ```bash
-npm install
+npm run install:all
+```
+
+### 2. Configure environment variables
+
+Copy `.env.example` to `.env.local` and add your API keys:
+
+```bash
+FINNHUB_API_KEY=your_finnhub_key
+BINANCE_API_KEY=your_binance_key    # Optional, increases rate limits
+MONGODB_URI=mongodb://localhost:27017/trading-beast  # Optional
+```
+
+### 3. Run development servers
+
+```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+This starts:
+- **Frontend**: http://localhost:3000 (Vite dev server)
+- **Backend**: http://localhost:5000 (Express API server)
 
-### Finnhub API key
+## Scripts
 
-- Create `.env.local` and set `FINNHUB_API_KEY`.
-- You can start from `.env.example`.
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start both frontend and backend in development |
+| `npm run dev:client` | Start only the React frontend |
+| `npm run dev:server` | Start only the Express backend |
+| `npm run build` | Build both client and server for production |
+| `npm run install:all` | Install dependencies for root, client, and server |
 
-Key files:
+## Features
 
-- `src/app/page.tsx` (home page)
-- `src/app/api/finnhub/quote/route.ts` (server-side Finnhub proxy for quotes)
-- `src/app/api/finnhub/candles/route.ts` (server-side Finnhub proxy for candles)
-- `src/components/FinnhubPriceChartWidget.tsx` (client-side price chart; falls back to live quote polling)
+- **Real-time charts** with WebSocket updates (Binance crypto)
+- **Multi-asset support**: US stocks, crypto, indices, commodities
+- **5 timeframes**: 1m, 5m, 15m, 1H, Daily
+- **Dashboard**: View multiple symbols at once
+- **Dark theme**: Professional trading UI
 
-Notes:
+## Data Sources
 
-- The Finnhub API key is kept server-side via the API routes; it is not exposed to the browser.
+| Source | Coverage | Real-time |
+|--------|----------|-----------|
+| Binance | Crypto (BTC-USD, ETH-USD, etc.) | ✅ WebSocket |
+| Yahoo Finance | Stocks, indices, commodities, forex | ❌ 15-30s delay |
+| Finnhub | US stocks (AAPL, MSFT, etc.) | ✅ API |
 
-## Build
+## Tech Stack
 
-```bash
-npm run build
-npm run start
-```
+**Frontend:**
+- React 19 + TypeScript
+- Vite
+- React Router v7
+- Tailwind CSS v4
+- lightweight-charts
+
+**Backend:**
+- Node.js + Express
+- TypeScript
+- MongoDB (Mongoose)
+
+## API Endpoints
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/yahoo/candles` | Yahoo Finance chart data |
+| `GET /api/binance/candles` | Binance crypto candles |
+| `GET /api/finnhub/quote` | Finnhub stock quote |
+| `GET /api/finnhub/candles` | Finnhub historical candles |
+| `GET /api/health` | Health check |
+
