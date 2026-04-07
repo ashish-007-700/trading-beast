@@ -44,8 +44,14 @@ export default function JournalEntryForm({ entry, onSave, onCancel }: JournalEnt
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-[#1E222D] rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+    <div 
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+      onClick={onCancel}
+    >
+      <div 
+        className="bg-[#1E222D] rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="sticky top-0 bg-[#1E222D] border-b border-gray-700 px-6 py-4">
           <h2 className="text-2xl font-bold text-white">
             {entry ? "Edit Journal Entry" : "New Journal Entry"}

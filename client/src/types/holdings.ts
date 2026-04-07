@@ -1,3 +1,14 @@
+export interface TradeAction {
+  step: number;
+  actionType: string;
+  asset: string;
+  strategy?: string;
+  direction: 'Buy' | 'Sell';
+  price: number;
+  time: string;
+  notes?: string;
+}
+
 export interface JournalEntry {
   _id: string;
   tradeName: string;
@@ -18,6 +29,7 @@ export interface JournalEntry {
   entryTime: string;
   exitTime?: string;
   notes?: string;
+  tradeActions?: TradeAction[];
   createdAt: string;
   updatedAt: string;
 }

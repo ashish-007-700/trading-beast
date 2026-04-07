@@ -12,17 +12,12 @@ export default function JournalPage() {
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editingEntry, setEditingEntry] = useState<JournalEntry | null>(null);
-  const [filterStatus, setFilterStatus] = useState<string>("ALL");
 
   // Fetch entries
   const fetchEntries = async () => {
     try {
       setLoading(true);
-      const url = filterStatus === "ALL" 
-        ? `${API_URL}/entries` 
-        : `${API_URL}/entries?status=${filterStatus}`;
-      
-      const response = await fetch(url);
+      const response = await fetch(`${API_URL}/entries`);
       const data = await response.json();
       
       if (data.success) {
@@ -53,7 +48,7 @@ export default function JournalPage() {
   useEffect(() => {
     fetchEntries();
     fetchStats();
-  }, [filterStatus]);
+  }, []);
 
   // Handle save (create or update)
   const handleSave = async (formData: Partial<JournalFormData>) => {
@@ -165,29 +160,6 @@ export default function JournalPage() {
             </div>
           </div>
         )}
-
-        {/* Filters */}
-        <div className="bg-[#1E222D] rounded-lg p-4 mb-6 flex items-center gap-4">
-          <span className="text-gray-400 text-sm font-medium">Filter:</span>
-          <div className="flex gap-2">
-            {["ALL", "OPEN", "CLOSED", "CANCELLED"].map((status) => (
-              <button
-                key={status}
-                onClick={() => setFilterStatus(status)}
-                className={`px-4 py-2 rounded text-sm font-medium transition-colors ${
-                  filterStatus === status
-                    ? "bg-blue-600 text-white"
-                    : "bg-[#131722] text-gray-400 hover:text-white"
-                }`}
-              >
-                {status}
-              </button>
-            ))}
-          </div>
-          <span className="ml-auto text-gray-400 text-sm">
-            {entries.length} {entries.length === 1 ? "entry" : "entries"}
-          </span>
-        </div>
 
         {/* Error */}
         {error && (

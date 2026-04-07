@@ -77,6 +77,39 @@ const JournalEntrySchema = new Schema({
     notes: {
         type: String,
     },
+    tradeActions: [{
+            step: {
+                type: Number,
+                required: true,
+            },
+            actionType: {
+                type: String,
+                required: true,
+            },
+            asset: {
+                type: String,
+                required: true,
+            },
+            strategy: {
+                type: String,
+            },
+            direction: {
+                type: String,
+                enum: ['Buy', 'Sell'],
+                required: true,
+            },
+            price: {
+                type: Number,
+                required: true,
+            },
+            time: {
+                type: Date,
+                required: true,
+            },
+            notes: {
+                type: String,
+            },
+        }],
     userId: {
         type: String,
         default: 'default-user',

@@ -33,12 +33,16 @@ app.use('/api/paper-trading/ibkr', ibkrRouter);
 app.get('/api/health', (_req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
-// MongoDB connection (optional - for future features)
+// MongoDB connection with proper settings
 const MONGODB_URI = process.env.MONGODB_URI;
 if (MONGODB_URI) {
-    mongoose.connect(MONGODB_URI)
+    mongoose.connect(MONGODB_URI, {
+        serverSelectionTimeoutMS: 5000,
+        socketTimeoutMS: 45000,
+        bufferCommands: false,
+    })
         .then(() => console.log('✅ MongoDB connected'))
-        .catch((err) => console.error('MongoDB connection error:', err));
+        .catch((err) => console.error('⚠️  MongoDB connection failed:', err.message));
 }
 else {
     console.log('ℹ️  No MONGODB_URI set - running without database');

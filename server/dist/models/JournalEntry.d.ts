@@ -1,4 +1,14 @@
 import mongoose, { Document } from 'mongoose';
+export interface TradeAction {
+    step: number;
+    actionType: string;
+    asset: string;
+    strategy?: string;
+    direction: 'Buy' | 'Sell';
+    price: number;
+    time: Date;
+    notes?: string;
+}
 export interface IJournalEntry extends Document {
     tradeName: string;
     playbookName?: string;
@@ -18,6 +28,7 @@ export interface IJournalEntry extends Document {
     entryTime: Date;
     exitTime?: Date;
     notes?: string;
+    tradeActions?: TradeAction[];
     userId?: string;
     createdAt: Date;
     updatedAt: Date;
