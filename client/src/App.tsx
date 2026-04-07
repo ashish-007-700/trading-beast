@@ -9,20 +9,42 @@ import Journal from './pages/Journal'
 import Alerts from './pages/Alerts'
 import News from './pages/News'
 import Settings from './pages/Settings'
+import Login from './pages/Login'
+import Register from './pages/Register'
+import ProtectedRoute from './components/ProtectedRoute'
 
 function App() {
   return (
     <Routes>
+      {/* Public auth routes */}
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      
+      {/* Protected routes with layout */}
       <Route path="/" element={<Layout />}>
         <Route index element={<Home />} />
-        <Route path="dashboard" element={<Dashboard />} />
-        <Route path="trade" element={<Trade />} />
-        <Route path="paper-trading" element={<PaperTrading />} />
-        <Route path="backtesting" element={<Backtesting />} />
-        <Route path="journal" element={<Journal />} />
-        <Route path="alerts" element={<Alerts />} />
+        <Route path="dashboard" element={
+          <ProtectedRoute><Dashboard /></ProtectedRoute>
+        } />
+        <Route path="trade" element={
+          <ProtectedRoute><Trade /></ProtectedRoute>
+        } />
+        <Route path="paper-trading" element={
+          <ProtectedRoute><PaperTrading /></ProtectedRoute>
+        } />
+        <Route path="backtesting" element={
+          <ProtectedRoute><Backtesting /></ProtectedRoute>
+        } />
+        <Route path="journal" element={
+          <ProtectedRoute><Journal /></ProtectedRoute>
+        } />
+        <Route path="alerts" element={
+          <ProtectedRoute><Alerts /></ProtectedRoute>
+        } />
         <Route path="news" element={<News />} />
-        <Route path="settings" element={<Settings />} />
+        <Route path="settings" element={
+          <ProtectedRoute><Settings /></ProtectedRoute>
+        } />
       </Route>
     </Routes>
   )

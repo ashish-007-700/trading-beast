@@ -12,6 +12,7 @@ import {
   CrosshairMode,
 } from "lightweight-charts";
 import { getDataSourceInfo } from "../lib/symbolClassifier";
+import { useAuthStore } from "../store/authStore";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -22,6 +23,8 @@ interface TradingViewChartProps {
   height?: number;
   /** Show timeframe selector buttons */
   showToolbar?: boolean;
+  /** Enable alert creation overlay */
+  enableAlerts?: boolean;
 }
 
 interface OhlcInfo {
@@ -83,6 +86,7 @@ export const TradingViewChart: React.FC<TradingViewChartProps> = ({
   symbol,
   height = 500,
   showToolbar = true,
+  enableAlerts = true,
 }) => {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
@@ -97,6 +101,13 @@ export const TradingViewChart: React.FC<TradingViewChartProps> = ({
   const [ohlc, setOhlc] = useState<OhlcInfo | null>(null);
   const [dataCount, setDataCount] = useState(0);
   const [isLive, setIsLive] = useState(false);
+  
+  // Alert overlay state
+  const { isAuthenticated, accessToken } = useAuthStore();
+  const [creatingAlert, setCreatingAlert] = useState(false);
+  const [alertSuccess, setAlertSuccess] = useState(false);
+  const [alertOverlay, setAlertOverlay] = useState<{ y: number; price: number } | null>(null);
+  const currentPrice = ohlc?.close ?? 0;
 
   /* ---- Chart initialization ---- */
   useEffect(() => {
@@ -382,6 +393,59 @@ export const TradingViewChart: React.FC<TradingViewChartProps> = ({
       }
     };
   }, [symbol, activeTimeframe]);
+
+  /* ---- Alert creation handler ---- */
+  const createAlert = async (condition: 'above' | 'below', targetPrice: number) => {
+    if (!accessToken) return;
+
+    setCreatingAlert(true);
+    try {
+      const response = await fetch('http://localhost:5000/api/alerts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          symbol,
+          targetPrice: Number(targetPrice.toFixed(2)),
+          condition,
+        }),
+      });
+
+      if (response.ok) {
+        setAlertSuccess(true);
+        setAlertOverlay(null);
+        setTimeout(() => setAlertSuccess(false), 2000);
+      }
+    } catch (error) {
+      console.error('Failed to create alert:', error);
+    } finally {
+      setCreatingAlert(false);
+    }
+  };
+
+  /* ---- Chart mouse move for alert overlay (optimized) ---- */
+  const handleChartMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (!enableAlerts || !isAuthenticated || !candleSeriesRef.current) {
+      return;
+    }
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const y = e.clientY - rect.top;
+    
+    // Convert Y coordinate to price using lightweight-charts coordinate conversion
+    const price = candleSeriesRef.current.coordinateToPrice(y);
+    
+    if (price !== null && typeof price === 'number' && isFinite(price)) {
+      setAlertOverlay({ y, price });
+    }
+  }, [enableAlerts, isAuthenticated]);
+
+  const handleChartMouseLeave = useCallback(() => {
+    setAlertOverlay(null);
+  }, []);
+
   /* ---------------------------------------------------------------- */
   /*  Render                                                           */
   /* ---------------------------------------------------------------- */
@@ -513,11 +577,16 @@ export const TradingViewChart: React.FC<TradingViewChartProps> = ({
       )}
 
       {/* ---- Chart container ---- */}
-      <div className="relative" style={{ height, background: "#131722" }}>
+      <div 
+        className="relative" 
+        style={{ height, background: "#131722" }}
+        onMouseMove={handleChartMouseMove}
+        onMouseLeave={handleChartMouseLeave}
+      >
         {/* Error overlay */}
         {error && (
           <div
-            className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3"
+            className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3"
             style={{ background: "rgba(19,23,34,0.95)" }}
           >
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#EF5350" strokeWidth="1.5">
@@ -544,7 +613,7 @@ export const TradingViewChart: React.FC<TradingViewChartProps> = ({
         {/* Loading overlay */}
         {loading && !error && (
           <div
-            className="absolute inset-0 z-10 flex items-center justify-center"
+            className="absolute inset-0 z-20 flex items-center justify-center"
             style={{ background: "rgba(19,23,34,0.8)" }}
           >
             <div className="flex flex-col items-center gap-2">
@@ -559,6 +628,61 @@ export const TradingViewChart: React.FC<TradingViewChartProps> = ({
                 Loading {symbol}…
               </span>
             </div>
+          </div>
+        )}
+
+        {/* Alert creation overlay */}
+        {enableAlerts && isAuthenticated && alertOverlay && !loading && !error && (
+          <div className="absolute inset-0 pointer-events-none z-10" style={{ willChange: 'transform' }}>
+            {/* Horizontal price line */}
+            <div
+              className="absolute left-0 right-14"
+              style={{
+                top: alertOverlay.y,
+                borderTop: '1px dashed rgba(41, 98, 255, 0.5)',
+              }}
+            />
+
+            {/* Small clock button at end of line (beside Y-axis) */}
+            <button
+              onClick={() => createAlert(alertOverlay.price > currentPrice ? 'above' : 'below', alertOverlay.price)}
+              disabled={creatingAlert}
+              className="absolute pointer-events-auto flex items-center justify-center w-4 h-4 rounded-sm"
+              style={{
+                top: alertOverlay.y - 8,
+                right: 58,
+                background: '#2962FF',
+                border: 'none',
+                cursor: 'pointer',
+              }}
+              title={`Set alert @ ${formatPrice(alertOverlay.price)}`}
+            >
+              {creatingAlert ? (
+                <svg className="w-2.5 h-2.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="white" strokeWidth="3" />
+                  <path className="opacity-75" fill="white" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+              ) : (
+                <svg className="w-2.5 h-2.5" fill="none" stroke="white" strokeWidth="2" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="12 6 12 12 16 14" />
+                </svg>
+              )}
+            </button>
+          </div>
+        )}
+
+        {/* Alert success notification */}
+        {alertSuccess && (
+          <div
+            className="absolute top-4 left-1/2 transform -translate-x-1/2 z-30 flex items-center gap-2 px-4 py-2 rounded-lg"
+            style={{
+              background: 'rgba(38, 166, 154, 0.9)',
+              color: '#FFFFFF',
+            }}
+          >
+            <span>✓</span>
+            <span className="text-sm font-medium">Alert created!</span>
           </div>
         )}
 

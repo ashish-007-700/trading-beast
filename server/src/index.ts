@@ -11,6 +11,10 @@ import truedataRouter from './routes/truedata.js';
 import binanceTestnetRouter from './routes/paper-trading/binance-testnet.js';
 import ibkrRouter from './routes/paper-trading/ibkr.js';
 import journalRouter from './routes/journal.js';
+import authRouter from './routes/auth.js';
+import alertsRouter from './routes/alerts.js';
+import { initEmailService } from './services/emailService.js';
+import { startAlertService } from './services/alertService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -26,6 +30,8 @@ app.use(cors());
 app.use(express.json());
 
 // API Routes
+app.use('/api/auth', authRouter);
+app.use('/api/alerts', alertsRouter);
 app.use('/api/yahoo', yahooRouter);
 app.use('/api/binance', binanceRouter);
 app.use('/api/finnhub', finnhubRouter);
@@ -41,14 +47,20 @@ app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// MongoDB connection (optional - for future features)
+// MongoDB connection (required for auth & alerts)
 const MONGODB_URI = process.env.MONGODB_URI;
 if (MONGODB_URI) {
   mongoose.connect(MONGODB_URI)
-    .then(() => console.log('✅ MongoDB connected'))
+    .then(() => {
+      console.log('✅ MongoDB connected');
+      // Initialize services after DB connection
+      initEmailService();
+      startAlertService();
+    })
     .catch((err) => console.error('MongoDB connection error:', err));
 } else {
   console.log('ℹ️  No MONGODB_URI set - running without database');
+  console.log('⚠️  Auth and alerts features will not work without MongoDB');
 }
 
 app.listen(PORT, () => {

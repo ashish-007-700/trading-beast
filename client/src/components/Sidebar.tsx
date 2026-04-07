@@ -1,4 +1,5 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useAuthStore } from "../store/authStore";
 
 const NAV_ITEMS = [
   {
@@ -91,7 +92,14 @@ const NAV_ITEMS = [
 
 export function Sidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
   const pathname = location.pathname;
+  const { isAuthenticated, user, logout } = useAuthStore();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   return (
     <aside
@@ -152,9 +160,55 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* Bottom section */}
+      {/* User section */}
       <div
-        className="px-4 py-3 border-t text-[10px] font-mono"
+        className="px-3 py-3 border-t"
+        style={{ borderColor: "rgba(42,46,57,0.5)" }}
+      >
+        {isAuthenticated && user ? (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 px-2">
+              <div 
+                className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold"
+                style={{ background: "#2962FF", color: "#fff" }}
+              >
+                {user.name.charAt(0).toUpperCase()}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-medium text-white truncate">{user.name}</p>
+                <p className="text-[10px] text-gray-500 truncate">{user.email}</p>
+              </div>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-[12px] font-medium text-gray-400 hover:bg-[#1E222D] hover:text-white transition-colors"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
+              Sign Out
+            </button>
+          </div>
+        ) : (
+          <Link
+            to="/login"
+            className="flex items-center gap-2 px-3 py-2 rounded-md text-[12px] font-medium text-gray-400 hover:bg-[#1E222D] hover:text-white transition-colors"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+              <polyline points="10 17 15 12 10 7" />
+              <line x1="15" y1="12" x2="3" y2="12" />
+            </svg>
+            Sign In
+          </Link>
+        )}
+      </div>
+
+      {/* Version */}
+      <div
+        className="px-4 py-2 border-t text-[10px] font-mono"
         style={{ borderColor: "rgba(42,46,57,0.5)", color: "#787B86" }}
       >
         Trading Beast v0.1
