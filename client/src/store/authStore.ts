@@ -7,6 +7,7 @@ export interface User {
   _id: string;
   email: string;
   name: string;
+  isDemoUser?: boolean;
   preferences: {
     alertsEnabled: boolean;
     emailNotifications: boolean;
@@ -28,10 +29,12 @@ interface AuthState {
   isLoading: boolean;
   error: string | null;
   isAuthenticated: boolean;
-  
+  isDemoMode: boolean;
+
   // Actions
   login: (email: string, password: string) => Promise<boolean>;
   register: (email: string, password: string, name: string) => Promise<boolean>;
+  loginAsDemo: () => void;
   logout: () => void;
   refreshAuth: () => Promise<boolean>;
   fetchUser: () => Promise<void>;
@@ -48,6 +51,7 @@ export const useAuthStore = create<AuthState>()(
       isLoading: false,
       error: null,
       isAuthenticated: false,
+      isDemoMode: false,
 
       login: async (email: string, password: string) => {
         set({ isLoading: true, error: null });
@@ -115,12 +119,42 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
+      loginAsDemo: () => {
+        const demoUser: User = {
+          _id: 'demo-user',
+          email: 'demo@tradingbeast.com',
+          name: 'Demo Trader',
+          isDemoUser: true,
+          preferences: {
+            alertsEnabled: false,
+            emailNotifications: false,
+            tradingSessionAlerts: {
+              tokyo: false,
+              london: false,
+              newYork: false,
+              sydney: false,
+            },
+          },
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        set({
+          user: demoUser,
+          accessToken: 'demo-token',
+          refreshToken: 'demo-refresh-token',
+          isAuthenticated: true,
+          isDemoMode: true,
+          error: null,
+        });
+      },
+
       logout: () => {
         set({
           user: null,
           accessToken: null,
           refreshToken: null,
           isAuthenticated: false,
+          isDemoMode: false,
           error: null,
         });
       },
@@ -231,6 +265,7 @@ export const useAuthStore = create<AuthState>()(
         refreshToken: state.refreshToken,
         user: state.user,
         isAuthenticated: state.isAuthenticated,
+        isDemoMode: state.isDemoMode,
       }),
     }
   )

@@ -94,7 +94,7 @@ export function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const pathname = location.pathname;
-  const { isAuthenticated, user, logout } = useAuthStore();
+  const { isAuthenticated, user, logout, isDemoMode } = useAuthStore();
 
   const handleLogout = () => {
     logout();
@@ -167,10 +167,21 @@ export function Sidebar() {
       >
         {isAuthenticated && user ? (
           <div className="space-y-2">
+            {isDemoMode && (
+              <div
+                className="flex items-center gap-1.5 px-2 py-1.5 rounded-md text-[11px] font-semibold"
+                style={{ background: "rgba(16,185,129,0.12)", color: "#10b981" }}
+              >
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+                  <circle cx="12" cy="12" r="12" />
+                </svg>
+                DEMO MODE — No account required
+              </div>
+            )}
             <div className="flex items-center gap-2 px-2">
-              <div 
+              <div
                 className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold"
-                style={{ background: "#2962FF", color: "#fff" }}
+                style={{ background: isDemoMode ? "#10b981" : "#2962FF", color: "#fff" }}
               >
                 {user.name.charAt(0).toUpperCase()}
               </div>

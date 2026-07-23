@@ -4,7 +4,12 @@ import { useAuthStore } from '../store/authStore';
 
 export default function Login() {
   const navigate = useNavigate();
-  const { login, isLoading, error, clearError } = useAuthStore();
+  const { login, loginAsDemo, isLoading, error, clearError } = useAuthStore();
+
+  const handleDemo = () => {
+    loginAsDemo();
+    navigate('/dashboard');
+  };
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -89,6 +94,26 @@ export default function Login() {
               )}
             </button>
           </form>
+
+          {/* Divider */}
+          <div className="flex items-center my-6">
+            <div className="flex-1 border-t border-gray-700"></div>
+            <span className="px-3 text-gray-500 text-xs uppercase tracking-wider">or</span>
+            <div className="flex-1 border-t border-gray-700"></div>
+          </div>
+
+          {/* Demo Button */}
+          <button
+            type="button"
+            onClick={handleDemo}
+            className="w-full py-3 px-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-semibold rounded-lg transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40 hover:scale-[1.02] active:scale-[0.98]"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+            Try Demo — No Account Needed
+          </button>
+          <p className="text-center text-gray-500 text-xs mt-2">Explore all features instantly, no sign-up required</p>
 
           {/* Register Link */}
           <div className="mt-6 text-center">
